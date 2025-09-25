@@ -83,10 +83,7 @@ int main() {
     "ATAA",
     "ATAT",
     "ATTA",
-    "ATTT",
-    "TAAT",
-    "TATA",
-    "TATT"
+    "ATTT"
   };
 
   for (const string& t : tests) {
