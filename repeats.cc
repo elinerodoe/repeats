@@ -3,6 +3,7 @@
  #include <string>
 using namespace std;
 
+
 // annotation struct
 struct Repeat {
   int index;  // starting position of repeat
@@ -24,7 +25,7 @@ bool isRotation(const std::vector<Repeat>& repeats, const int i, const int j) {
 // checks if repeat is primitive
 bool isPrimitive (const std::vector<Repeat>& repeats, const int i, const int j, const int count) {
   for (const Repeat& r : repeats) {
-    if (r.index <= i && r.index + (r.period * r.count) > i && r.index + (r.period * r.count) >= i + (j * count) && r.period <= j) {
+    if (r.index <= i && r.index + (r.period * r.count) > i && r.index + (r.period * r.count) + r.shift >= i + (j * count) && r.period <= j) {
       return false;
     }
   }
@@ -61,7 +62,8 @@ void findRepeat(const string S) {
           continue;
         }
         // calculate shift
-        while (((i + (count * j) + j - 1) <= length_S) && (S[i + (count * j) + shift] == S[i + shift])) {
+        
+        while (((i + (count * j) + shift + 1) <= length_S) && (S[i + (count * j) + shift] == S[i + shift])) {
           shift++;
         }
         repeats.push_back({i, j, count, shift});
@@ -72,27 +74,14 @@ void findRepeat(const string S) {
 }
 
 
-int main() {
-  vector<string> tests = {
-    "CATCATACATACTACTAAAAA",
-    "CATCATCAGGGGCATCATCAGGGG",
-    "AAAA",
-    "AAAT",
-    "AATA",
-    "AATT", 
-    "ATAA",
-    "ATAT",
-    "ATTA",
-    "ATTT"
-  };
-
-  for (const string& t : tests) {
-    cout << "input: "<< t << " output: ";
-    findRepeat(t);
-    cout << endl;
+int main(int argc, char* argv[]) {
+  if (argc < 2) {
+    cerr << "Usage: ./repeats <word>\n";
+    return 1;
   }
-} 
-
-
+  string S = argv[1];
+  findRepeat(S);
+  return 0;
+}
 
 
