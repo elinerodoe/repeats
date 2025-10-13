@@ -19,7 +19,7 @@ def convert_output(output):
     return results
 
 
-def compare_outputs(word):
+def compare_pmr(word):
     """compare output repeats.cc with cover.py"""
 
     # get output repeats.cc
@@ -43,33 +43,36 @@ def compare_outputs(word):
         print(f"  C++:    {cc_output}")
         print(f"  Python: {py_output}")
 
+def compare_cover():
+    print("hello")
+
 
 if __name__ == "__main__":
     
     # test 1: non isomorphic binary words of certain length over binary alphabet--> done (up to length 10)
     for word in non_isomorphic_binary_words(10):
-        compare_outputs(word)
+        compare_pmr(word)
 
     # test 2: non-isomorphic words up to a certain length over binary alphabet --> done (up to length 10)
     for word in non_isomorphic_binary_words_upto(10):
-        compare_outputs(word)
+        compare_pmr(word)
 
     # test 3: n-th (finite) Fibonacci word --> done
-    compare_outputs(nth_fibonacci_word(1))
-    compare_outputs(nth_fibonacci_word(2))
-    compare_outputs(nth_fibonacci_word(3))
-    compare_outputs(nth_fibonacci_word(4))
-    compare_outputs(nth_fibonacci_word(5))
-    compare_outputs(nth_fibonacci_word(6))
+    compare_pmr(nth_fibonacci_word(1))
+    compare_pmr(nth_fibonacci_word(2))
+    compare_pmr(nth_fibonacci_word(3))
+    compare_pmr(nth_fibonacci_word(4))
+    compare_pmr(nth_fibonacci_word(5))
+    compare_pmr(nth_fibonacci_word(6))
 
     # test 4: the prefix of a certain length of the infinite Fibonacci word --> done 
-    compare_outputs(fibonacci_word_upto(10))
-    compare_outputs(fibonacci_word_upto(20))
-    compare_outputs(fibonacci_word_upto(30))
-    compare_outputs(fibonacci_word_upto(40))
-    compare_outputs(fibonacci_word_upto(50))
+    compare_pmr(fibonacci_word_upto(10))
+    compare_pmr(fibonacci_word_upto(20))
+    compare_pmr(fibonacci_word_upto(30))
+    compare_pmr(fibonacci_word_upto(40))
+    compare_pmr(fibonacci_word_upto(50))
 
     # test 5: Lyndon words of a certain length over a ordered alphabet --> done (up to length 10)
     for word in lyndon_words(10):
-      compare_outputs(word)
+      compare_pmr(word)
 
