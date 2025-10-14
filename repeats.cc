@@ -18,6 +18,7 @@ struct Repeat {
 struct Interval {
   int start;
   int end; 
+  int length;
 };
 
 
@@ -84,118 +85,113 @@ vector<Repeat> findRepeat(const string S) {
 }
 
 
-
-void shiftIntervals(vector<Interval>& intervals, int shift, int start, int end) {
-  int new_start = 0;
-  int new_end = 0;
+// get all possible covers with shift
+void shiftIntervals(vector<vector<Interval>>& covers, int shift, int start, int end, int pmr, int length) {
   for (int i = 0; i <= shift; i++) {
-    new_start = start + i;
-    new_end = end + i;
-    intervals.push_back({new_start, new_end});
+    covers[pmr].push_back({start + i, end + i, length});
   }
 }
 
 
-// get all intervals
-vector<Interval> getInterval(const string S){
-  vector<Interval> intervals;
-  vector<Repeat> repeats = findRepeat(S);
+// get all possible covers
+vector<vector<Interval>> getInterval(const string S){
+  vector<vector<Interval>>covers;
   int start;
   int end;
-  int end_repeat;
   int shift;
+  int length;
+  int end_full_repeat;
 
-  // loop over repeats heen
-  for (Repeat repeat : repeats) {
-    if (repeat.count > 2) {
-      end_repeat = repeat.index + (repeat.period * repeat.count) - 1;
+  vector<Repeat> repeats = findRepeat(S);
+
+  // loop through all repeats
+  for (long unsigned int i = 0; i < repeats.size(); i++) {
+    covers.push_back({});
+    const auto& repeat = repeats[i];
+
+    if (repeat.count <= 2) {
+      start = repeat.index;
+      length = repeat.period * repeat.count; 
+      end = start + length - 1;
+      shift = repeat.shift;
+      
+      shiftIntervals(covers, shift, start, end, i, length);
+    }
+    else {
+      end_full_repeat = repeat.index + (repeat.period * repeat.count) - 1;
       for (int k = 0; k <= repeat.count - 2; k++) {
         for (int t = 2; t <= repeat.count - k; t++) {
           start = repeat.index + (k * repeat.period);
           end = repeat.index + (k + t) * repeat.period - 1;
-          if (end_repeat == end) {
+          length = end - start + 1;
+
+          if (end_full_repeat == end) {
             shift = repeat.shift;
-            shiftIntervals(intervals, shift, start, end);
+            shiftIntervals(covers, shift, start, end, i, length);
           }
           else {
-            shift = min(repeat.period - 1, end_repeat - end);
-            shiftIntervals(intervals, shift, start, end);
-
+            shift = min(repeat.period - 1, end_full_repeat - end);
+            shiftIntervals(covers, shift, start, end, i, length);
           }
         }
       }
     }
-
-    start = repeat.index;
-    end = start + (repeat.period * repeat.count) - 1; 
-    shiftIntervals(intervals, repeat.shift, start, end);
-
   }
-  return intervals;
+  return covers;
 }
 
 
-int findCover(vector <Interval> intervals, int combination) {
-  int cover_mask = 0;
-  int number_cover = 0;
-  int number_intervals = intervals.size();
-
-  for (int bit = 0; bit < number_intervals; bit++){
-    
-    if (!(combination &(1 << bit))) { // als bit niet 1 is
-      continue;
+// find all possible combinations
+void findCover(vector<vector<Interval>> & covers, int depth, int prev_end, int &best_cover, int cover_size, vector<Interval>& current, vector<Interval>& best_combination) {
+  // reached last pmr
+  if (depth == (int)covers.size()) {
+    if (cover_size > best_cover) {
+      best_cover = cover_size;
+      best_combination = current;
     }
+    return;
+  }
 
-    // string coveren
-    for (int pos = intervals[bit].start; pos <= intervals[bit].end; pos++) {
-      if (cover_mask & (1 << pos)) { // overlap
-        return -1;
-      }
-      cover_mask |= (1 << pos); // zet digit om naar 1
-      number_cover++;
+  // loop through all covers of pmr[depth]
+  for (const auto& cover : covers[depth]){
+
+    // check for overlap
+    if (prev_end < cover.start) {
+      current.push_back(cover);
+      findCover(covers, depth + 1, cover.end, best_cover, cover_size + cover.length, current, best_combination);
+      current.pop_back();
     }
-  } 
-
-  return number_cover;
+  }
+  findCover(covers, depth + 1, prev_end, best_cover, cover_size, current, best_combination);
 }
 
 
+// get maximal cover of string S with brute force
 int maximalCover(const string S) {
-  vector<Interval> intervals = getInterval(S);
-  int number_combinations = pow(2, intervals.size());
-  int number_cover;
-  int best_cover = -1;
-  int best_combination = -1;
-  bool valid;
-  
-  for (int combination = 0; combination < number_combinations; combination++) {
-    number_cover = findCover(intervals, combination);
+  int best_cover = 0;
+  vector<Interval> current;
+  vector<Interval> best_combination;
 
+  vector<vector<Interval>> covers = getInterval(S);
 
-    if (best_cover < number_cover) {
-      best_cover = number_cover;
-      best_combination = combination;
+  // print all possible covers
+  for (size_t i = 0; i < covers.size(); ++i) {
+    cout << "pmr " << i << ": ";
+    for (const auto& cover : covers[i]) {
+        cout << "[" << cover.start << "," << cover.end << "," << cover.length << "] ";
     }
+    cout << "\n";
   }
 
+  findCover(covers, 0, -1, best_cover, 0, current, best_combination);
+
+  // print maximal cover
+  cout << "best cover: " << best_cover << " --> ";
+  for (const auto& i : best_combination) {
+    cout << "[" << i.start << "," << i.end << "] ";
+  }
   return best_cover; 
 }
-
-  // print check
-  // cout << "best cover: " << best_cover << endl;
-  // cout << "best combination: " << best_combination << endl;
-
-  // for (int bit = 0; bit < intervals.size(); bit++){
-    
-  //   if (!(best_combination &(1 << bit))) { // als bit niet 1 is
-  //     continue;
-  //   }
-  //   cout << intervals[bit].start << " " << intervals[bit].end << endl;
-
-  // } 
-
-
-
 
 
 
@@ -206,7 +202,7 @@ int main(int argc, char* argv[]) {
     return 1;
   }
   string S = argv[1];
-  // repeats = findRepeat(S);
+  // repeats = findRepeat(S); // print pmrs
 
   cout << maximalCover(S) << endl;
 
