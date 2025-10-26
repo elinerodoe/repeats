@@ -2,6 +2,7 @@
  #include <vector>
  #include <string>
  #include <cmath>
+ #include <algorithm>
 using namespace std;
 
 
@@ -19,6 +20,7 @@ struct Interval {
   int start;
   int end; 
   int length;
+  int group;
 };
 
 
@@ -77,7 +79,7 @@ vector<Repeat> findRepeat(const string S) {
           shift++;
         }
         repeats.push_back({i, j, count, shift});
-        cout << "(" << i << "," << j << "," << count << "," << shift << ") ";
+        // cout << "(" << i << "," << j << "," << count << "," << shift << ") ";
       }
     }
   }
@@ -88,7 +90,7 @@ vector<Repeat> findRepeat(const string S) {
 // get all possible covers with shift
 void shiftIntervals(vector<vector<Interval>>& covers, int shift, int start, int end, int pmr, int length) {
   for (int i = 0; i <= shift; i++) {
-    covers[pmr].push_back({start + i, end + i, length});
+    covers[pmr].push_back({start + i, end + i, length, pmr});
   }
 }
 
@@ -166,30 +168,70 @@ void findCover(vector<vector<Interval>> & covers, int depth, int prev_end, int &
 }
 
 
+bool overlaps(const Interval& cover, const Interval& new_cover) {
+  if (new_cover.start <= cover.end && cover.start <= new_cover.end) {
+    return true;
+  }
+  return false;
+}
+
+
+
+
+
+// GREEDY ALGORITHM
+void greedyCover(const vector<vector<Interval>>& covers, int &best_cover, vector<Interval>& best_combination) {
+    vector<Interval> covers_1D;
+    vector<bool> group_used(covers.size(), false);
+    bool overlap_found = false;
+
+    // convert 2D covers vector to 1D covers vector 
+    for (int pmr = 0; pmr < (int)covers.size(); ++pmr) {
+      for (const auto& cover : covers[pmr]) {
+        covers_1D.push_back({cover.start, cover.end, cover.length, pmr});
+      }
+    }
+
+    // sort 1D covers list by longest length and if equal by smallest end position
+    std::sort(covers_1D.begin(), covers_1D.end(),
+      [](const Interval& a, const Interval& b) {
+        if (a.length > b.length) {
+            return true;
+        }
+        else if (a.length < b.length) {
+            return false;
+        }
+        return a.end < b.end;
+      }
+    );
+
+    for (const auto& i : covers_1D) {
+      for (const auto& c : best_combination) {
+        if (overlaps(c, i)) {
+          overlap_found = true;
+          break;
+        }
+        overlap_found = false;
+      }
+      if (!group_used[i.group] && !overlap_found) {
+        best_combination.push_back(i);
+        group_used[i.group] = true;
+        best_cover += i.length;
+      }
+    }
+}
+
+
 // get maximal cover of string S with brute force
 int maximalCover(const string S) {
   int best_cover = 0;
   vector<Interval> current;
   vector<Interval> best_combination;
-
   vector<vector<Interval>> covers = getInterval(S);
 
-  // print all possible covers
-  for (size_t i = 0; i < covers.size(); ++i) {
-    cout << "pmr " << i << ": ";
-    for (const auto& cover : covers[i]) {
-        cout << "[" << cover.start << "," << cover.end << "," << cover.length << "] ";
-    }
-    cout << "\n";
-  }
+  // findCover(covers, 0, -1, best_cover, 0, current, best_combination);
+  greedyCover(covers, best_cover, best_combination);
 
-  findCover(covers, 0, -1, best_cover, 0, current, best_combination);
-
-  // print maximal cover
-  cout << "best cover: " << best_cover << " --> ";
-  for (const auto& i : best_combination) {
-    cout << "[" << i.start << "," << i.end << "] ";
-  }
   return best_cover; 
 }
 
@@ -202,7 +244,6 @@ int main(int argc, char* argv[]) {
     return 1;
   }
   string S = argv[1];
-  // repeats = findRepeat(S); // print pmrs
 
   cout << maximalCover(S) << endl;
 
