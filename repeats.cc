@@ -192,14 +192,21 @@ void greedyCover(const vector<vector<Interval>>& covers, int &best_cover, vector
       }
     }
 
+    // sort 1D covers list by smallest end position and if equal by longest length
+    // std::sort(covers_1D.begin(), covers_1D.end(),
+    //   [](const Interval& a, const Interval& b) {
+    //     if (a.end != b.end) {
+    //       return a.end < b.end;
+    //     }
+    //     return a.length > b.length;
+    //   }
+    // );
+
     // sort 1D covers list by longest length and if equal by smallest end position
     std::sort(covers_1D.begin(), covers_1D.end(),
       [](const Interval& a, const Interval& b) {
-        if (a.length > b.length) {
-            return true;
-        }
-        else if (a.length < b.length) {
-            return false;
+        if (a.length != b.length) {
+            return a.length > b.length;
         }
         return a.end < b.end;
       }
@@ -222,30 +229,34 @@ void greedyCover(const vector<vector<Interval>>& covers, int &best_cover, vector
 }
 
 
-// get maximal cover of string S with brute force
-int maximalCover(const string S) {
+
+int main(int argc, char* argv[]) {
   int best_cover = 0;
   vector<Interval> current;
   vector<Interval> best_combination;
-  vector<vector<Interval>> covers = getInterval(S);
 
-  // findCover(covers, 0, -1, best_cover, 0, current, best_combination);
-  greedyCover(covers, best_cover, best_combination);
-
-  return best_cover; 
-}
-
-
-
-int main(int argc, char* argv[]) {
-  vector<Repeat> repeats;
-  if (argc < 2) {
-    cerr << "Usage: ./repeats <word>\n";
+  if (argc < 3) {
+    cerr << "Usage: ./repeats <algorithm> <word>\n";
+    cerr << "Functions: bruteforce | greedy\n";
     return 1;
   }
-  string S = argv[1];
+  string algorithm = argv[1];
+  string S = argv[2];
 
-  cout << maximalCover(S) << endl;
+  vector<vector<Interval>> covers = getInterval(S);
+
+  if (algorithm == "bruteforce") {
+    findCover(covers, 0, -1, best_cover, 0, current, best_combination);
+  }
+  else if (algorithm == "greedy") {
+    greedyCover(covers, best_cover, best_combination);
+  }
+  else {
+    cerr << "Unknown mode: " << algorithm << endl;
+    return 1;
+  }
+
+  cout << best_cover << endl;
 
   return 0;
 }

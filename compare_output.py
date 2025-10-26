@@ -47,7 +47,7 @@ def compare_pmr(word):
 
 def compare_cover(word):
     """compare output of brute force maximal cover"""
-    # start_cc = time.perf_counter() # start timer
+    start_cc = time.perf_counter() # start timer
 
     # get output repeats.cc
     result = subprocess.run(
@@ -58,26 +58,26 @@ def compare_cover(word):
 
     cc_output = int(result.stdout)
 
-    # end_cc = time.perf_counter()
-    # length = end_cc - start_cc
-    # hours = int(length // 3600)
-    # minutes = int((length % 3600) // 60)
-    # seconds = int(length % 60)
-    # milliseconds = int((length * 1000) % 1000)
-    # print(f"time cc: {hours:02d}:{minutes:02d}:{seconds:02d}:{milliseconds:03d}")
+    end_cc = time.perf_counter()
+    length = end_cc - start_cc
+    hours = int(length // 3600)
+    minutes = int((length % 3600) // 60)
+    seconds = int(length % 60)
+    milliseconds = int((length * 1000) % 1000)
+    print(f"time cc: {hours:02d}:{minutes:02d}:{seconds:02d}:{milliseconds:03d}")
 
-    # start_py = time.perf_counter() # start timer
+    start_py = time.perf_counter() # start timer
 
     pmrs = sorted(find_pmrs(word))
     py_output = brute_cover(word, pmrs)
 
-    # end_py = time.perf_counter()
-    # length = end_py - start_py
-    # hours = int(length // 3600)
-    # minutes = int((length % 3600) // 60)
-    # seconds = int(length % 60)
-    # milliseconds = int((length * 1000) % 1000)
-    # print(f"time py: {hours:02d}:{minutes:02d}:{seconds:02d}:{milliseconds:03d}")
+    end_py = time.perf_counter()
+    length = end_py - start_py
+    hours = int(length // 3600)
+    minutes = int((length % 3600) // 60)
+    seconds = int(length % 60)
+    milliseconds = int((length * 1000) % 1000)
+    print(f"time py: {hours:02d}:{minutes:02d}:{seconds:02d}:{milliseconds:03d}")
 
     # check whether output is the same
     if cc_output != py_output:
@@ -87,65 +87,80 @@ def compare_cover(word):
     else:
         print(f"✅ GOODD")
     
-    return py_output - cc_output
 
+
+def test_greedy(word):
+    """output brute force vs greedy algorithms"""
+
+    # get bruteforce output
+    result_bf = subprocess.run(
+        ["./repeats", "bruteforce", word],
+        text=True,
+        capture_output=True
+    )
+    output_bf = int(result_bf.stdout)
+
+    # get greedy output
+    result_greedy = subprocess.run(
+        ["./repeats", "greedy", word],
+        text=True,
+        capture_output=True
+    )
+    output_greedy = int(result_greedy.stdout)
+
+    # check whether output is the same
+    # if output_bf != output_greedy:
+    #     print(f"❌ ERROR for word '{word}'")
+    #     print(f"  bruteforce: {output_bf}")
+    #     print(f"  greedy    : {output_greedy}")
+    # else:
+    #     print(f"✅ GOODD")
+    
+    return output_bf - output_greedy
+
+
+def calculate_output(error, number_words, total_correct, total_error):
+    number_words += 1
+    if (error == 0):
+        total_correct += 1
+    else:
+        total_error += error
+    return number_words, total_correct, total_error
 
 if __name__ == "__main__":
-    
-    totaal_fout = 0
-    count = 0
-    # # test 1: non isomorphic binary words of certain length over binary alphabet--> done (up to length 10)
-    # for word in non_isomorphic_binary_words(10):
-    #     # compare_pmr(word)
-    #     count += 1
-    #     totaal_fout += compare_cover(word)
-    
-    # print(totaal_fout/count)
+    total_error = 0
+    total_correct = 0
+    number_words = 0
 
+    # test 1: non isomorphic binary words of certain length over binary alphabet--> done (up to length 10)
+    for word in non_isomorphic_binary_words(10):
+        error = test_greedy(word)
+        number_words, total_correct, total_error = calculate_output(error, number_words, total_correct, total_error)
 
-    # # test 2: non-isomorphic words up to a certain length over binary alphabet --> done (up to length 10)
+    # test 2: non-isomorphic words up to a certain length over binary alphabet --> done (up to length 10)
     for word in non_isomorphic_binary_words_upto(10):
-        count += 1
-        # compare_pmr(word)
-        totaal_fout += compare_cover(word)
-    
-    print(totaal_fout/count)
+        error = test_greedy(word)
+        number_words, total_correct, total_error = calculate_output(error, number_words, total_correct, total_error)
 
-    # # test 3: n-th (finite) Fibonacci word --> done
-    # compare_pmr(nth_fibonacci_word(1))
-    # compare_pmr(nth_fibonacci_word(2))
-    # compare_pmr(nth_fibonacci_word(3))
-    # compare_pmr(nth_fibonacci_word(4))
-    # compare_pmr(nth_fibonacci_word(5))
-    # compare_pmr(nth_fibonacci_word(6))
+    # test 3: n-th (finite) Fibonacci word --> done
+    for i in range(1, 6):
+        error = test_greedy(nth_fibonacci_word(i))
+        number_words, total_correct, total_error = calculate_output(error, number_words, total_correct, total_error)
 
-    # compare_cover(nth_fibonacci_word(1))
-    # compare_cover(nth_fibonacci_word(2))
-    # compare_cover(nth_fibonacci_word(3))
-    # compare_cover(nth_fibonacci_word(4))
-    # compare_cover(nth_fibonacci_word(5))
-    # compare_cover(nth_fibonacci_word(6))
+    # test 4: the prefix of a certain length of the infinite Fibonacci word --> done 
+    for i in range(10, 60, 10):
+        error = test_greedy(fibonacci_word_upto(i))
+        number_words, total_correct, total_error = calculate_output(error, number_words, total_correct, total_error)
+
+    # test 5: Lyndon words of a certain length over a ordered alphabet --> done (up to length 10)
+    for word in lyndon_words(10):
+        error = test_greedy(word)
+        number_words, total_correct, total_error = calculate_output(error, number_words, total_correct, total_error)
 
 
+    print(f"MAE: {total_error/number_words}")
+    print(f"accuracy: {(total_correct/number_words)*100}%")
 
-    # # test 4: the prefix of a certain length of the infinite Fibonacci word --> done 
-    # compare_pmr(fibonacci_word_upto(10))
-    # compare_pmr(fibonacci_word_upto(20))
-    # compare_pmr(fibonacci_word_upto(30))
-    # compare_pmr(fibonacci_word_upto(40))
-    # compare_pmr(fibonacci_word_upto(50))
-
-    # compare_cover(fibonacci_word_upto(10))
-    # compare_cover(fibonacci_word_upto(20))
-    # compare_cover(fibonacci_word_upto(30))
-    # compare_cover(fibonacci_word_upto(40))
-    # compare_cover(fibonacci_word_upto(50))
-    # compare_cover(fibonacci_word_upto(100))
-
-    # # test 5: Lyndon words of a certain length over a ordered alphabet --> done (up to length 10)
-    # for word in lyndon_words(10):
-    # #   compare_pmr(word)
-    #   compare_cover(word)
-
-
+# MAE: 0.30455927051671733
+# accuracy: 80.9726443768997%
 
