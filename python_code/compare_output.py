@@ -109,14 +109,44 @@ def test_greedy(word):
     output_greedy = int(result_greedy.stdout)
 
     # check whether output is the same
-    # if output_bf != output_greedy:
-    #     print(f"❌ ERROR for word '{word}'")
-    #     print(f"  bruteforce: {output_bf}")
-    #     print(f"  greedy    : {output_greedy}")
-    # else:
-    #     print(f"✅ GOODD")
+    if output_bf != output_greedy:
+        print(f"❌ ERROR for word '{word}'")
+        print(f"  bruteforce: {output_bf}")
+        print(f"  greedy    : {output_greedy}")
+    else:
+        print(f"✅ GOODD")
     
     return output_bf - output_greedy
+
+def test_dynamic(word):
+    """output brute force vs greedy algorithms"""
+
+    # get bruteforce output
+    result_a = subprocess.run(
+        ["./repeats", "bruteforce", word],
+        text=True,
+        capture_output=True
+    )
+    output_a = int(result_a.stdout)
+    print(output_a)
+
+    # get greedy output
+    result_b = subprocess.run(
+        ["./repeats", "dynamic", word],
+        text=True,
+        capture_output=True
+    )
+    output_b = int(result_b.stdout)
+    print(output_b)
+
+    # check whether output is the same
+    if output_a != output_b:
+        print(f"❌ ERROR for word '{word}'")
+        print(f"  bruteforce: {output_a}")
+        print(f"  dynamic    : {output_b}")
+    else:
+        print(f"✅ GOODD")
+    
 
 
 def calculate_output(error, number_words, total_correct, total_error):
@@ -127,40 +157,60 @@ def calculate_output(error, number_words, total_correct, total_error):
         total_error += error
     return number_words, total_correct, total_error
 
+
 if __name__ == "__main__":
-    total_error = 0
-    total_correct = 0
-    number_words = 0
+    # total_error = 0
+    # total_correct = 0
+    # number_words = 0
 
-    # test 1: non isomorphic binary words of certain length over binary alphabet--> done (up to length 10)
-    for word in non_isomorphic_binary_words(10):
-        error = test_greedy(word)
-        number_words, total_correct, total_error = calculate_output(error, number_words, total_correct, total_error)
+    # # test 1: non isomorphic binary words of certain length over binary alphabet--> done (up to length 10)
+    # for word in non_isomorphic_binary_words(10):
+    #     error = test_greedy(word)
+    #     number_words, total_correct, total_error = calculate_output(error, number_words, total_correct, total_error)
 
-    # test 2: non-isomorphic words up to a certain length over binary alphabet --> done (up to length 10)
+    # # test 2: non-isomorphic words up to a certain length over binary alphabet --> done (up to length 10)
+    # for word in non_isomorphic_binary_words_upto(10):
+    #     error = test_greedy(word)
+    #     number_words, total_correct, total_error = calculate_output(error, number_words, total_correct, total_error)
+
+    # # test 3: n-th (finite) Fibonacci word --> done
+    # for i in range(1, 6):
+    #     error = test_greedy(nth_fibonacci_word(i))
+    #     number_words, total_correct, total_error = calculate_output(error, number_words, total_correct, total_error)
+
+    # # test 4: the prefix of a certain length of the infinite Fibonacci word --> done 
+    # for i in range(10, 60, 10):
+    #     error = test_greedy(fibonacci_word_upto(i))
+    #     number_words, total_correct, total_error = calculate_output(error, number_words, total_correct, total_error)
+
+    # # test 5: Lyndon words of a certain length over a ordered alphabet --> done (up to length 10)
+    # for word in lyndon_words(10):
+    #     error = test_greedy(word)
+    #     number_words, total_correct, total_error = calculate_output(error, number_words, total_correct, total_error)
+
+
+    # print(f"MAE: {total_error/number_words}")
+    # print(f"accuracy: {(total_correct/number_words)*100}%")
+
+
+
+    # for word in non_isomorphic_binary_words(10):
+    #     test_dynamic(word)
+    
     for word in non_isomorphic_binary_words_upto(10):
-        error = test_greedy(word)
-        number_words, total_correct, total_error = calculate_output(error, number_words, total_correct, total_error)
+        # print(word)
+        test_dynamic(word)
 
-    # test 3: n-th (finite) Fibonacci word --> done
-    for i in range(1, 6):
-        error = test_greedy(nth_fibonacci_word(i))
-        number_words, total_correct, total_error = calculate_output(error, number_words, total_correct, total_error)
+    # for i in range(1, 6):
+    #     test_dynamic(nth_fibonacci_word(i))
 
-    # test 4: the prefix of a certain length of the infinite Fibonacci word --> done 
-    for i in range(10, 60, 10):
-        error = test_greedy(fibonacci_word_upto(i))
-        number_words, total_correct, total_error = calculate_output(error, number_words, total_correct, total_error)
-
-    # test 5: Lyndon words of a certain length over a ordered alphabet --> done (up to length 10)
-    for word in lyndon_words(10):
-        error = test_greedy(word)
-        number_words, total_correct, total_error = calculate_output(error, number_words, total_correct, total_error)
+    # for i in range(10, 60, 10):
+    #     test_dynamic(fibonacci_word_upto(i))
+    
+    # for word in lyndon_words(10):
+    #     test_dynamic(word)
 
 
-    print(f"MAE: {total_error/number_words}")
-    print(f"accuracy: {(total_correct/number_words)*100}%")
 
-# MAE: 0.30455927051671733
-# accuracy: 80.9726443768997%
 
+# ACAACACAACAACACAACACAACAACACAACAACACAACACAACAACACAACACAACAACACAACAACACAACACAACAACACAACAACACAACACAACA
