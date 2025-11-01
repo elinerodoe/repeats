@@ -27,7 +27,7 @@ class Bruteforce {
                         int &best_cover, 
                         int cover_size, 
                         vector<Interval>& current, 
-                        vector<Interval>& best_combination);
+                        vector<vector<Interval>>& best_combinations);
 }; // Bruteforce
 
 

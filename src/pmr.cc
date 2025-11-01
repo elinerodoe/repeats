@@ -6,6 +6,7 @@
  #include <string>
  #include <cmath>
  #include <algorithm>
+ #include <chrono> // voor timing
 using namespace std;
 
 bool PMR::isRotation(const std::vector<Repeat>& repeats, const int i, const int j) {
@@ -39,12 +40,13 @@ bool PMR::isPrimitive (const std::vector<Repeat>& repeats,
 //******************************************************************************
 
 vector<Repeat> PMR::findRepeat(const string S) {
-  // vector <Repeat> repeats;
+  using namespace std::chrono;
+  auto time_a = high_resolution_clock::now();
+
   int max_period;
   int count;
   int shift;
   string unit;
-
   int length_S = S.length();
 
   for (int i = 0; i < length_S; i++) {
@@ -76,6 +78,11 @@ vector<Repeat> PMR::findRepeat(const string S) {
       }
     }
   }
+
+  auto time_b = chrono::high_resolution_clock::now();
+  duration<double> elapsed = time_b - time_a;
+  cout << "timer findRepeat(): " << elapsed.count() << " seconds\n";
+
   return repeats;
 } // PMR::findRepeat
 
@@ -95,6 +102,9 @@ void PMR::shiftIntervals(vector<vector<Interval>>& covers,
 //******************************************************************************
 
 vector<vector<Interval>> PMR::getInterval(const vector<Repeat> repeats){
+  using namespace std::chrono;
+  auto time_a = high_resolution_clock::now();
+
   vector<vector<Interval>>covers;
   int start;
   int end;
@@ -137,5 +147,9 @@ vector<vector<Interval>> PMR::getInterval(const vector<Repeat> repeats){
       }
     }
   }
+  auto time_b = chrono::high_resolution_clock::now();
+  duration<double> elapsed = time_b - time_a;
+  cout << "timer getInterval(): " << elapsed.count() << " seconds\n";
+
   return covers;
 } // PMR::getInterval

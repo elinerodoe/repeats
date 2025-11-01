@@ -2,11 +2,12 @@
 #include "../inc/pmr.h"
 #include "../inc/types.h"
 
- #include <iostream>
- #include <vector>
- #include <string>
- #include <cmath>
- #include <algorithm>
+#include <iostream>
+#include <vector>
+#include <string>
+#include <cmath>
+#include <algorithm>
+#include <chrono> // voor timing
 using namespace std;
 
 
@@ -15,12 +16,18 @@ void Bruteforce::bruteforceCover(int depth,
                                 int &best_cover, 
                                 int cover_size, 
                                 vector<Interval>& current, 
-                                vector<Interval>& best_combination) {
+                                vector<vector<Interval>>& best_combinations) {
   // reached last pmr
   if (depth == (int)covers.size()) {
     if (cover_size > best_cover) {
       best_cover = cover_size;
-      best_combination = current;
+      // best_combination = current;
+
+      best_combinations.clear();
+      best_combinations.push_back(current);
+    }
+    else if(cover_size == best_cover) {
+      best_combinations.push_back(current);
     }
     return;
   }
@@ -29,11 +36,11 @@ void Bruteforce::bruteforceCover(int depth,
     // check for overlap
     if (prev_end < cover.start) {
       current.push_back(cover);
-      bruteforceCover(depth + 1, cover.end, best_cover, cover_size + cover.length, current, best_combination);
+      bruteforceCover(depth + 1, cover.end, best_cover, cover_size + cover.length, current, best_combinations);
       current.pop_back();
     }
   }
-  bruteforceCover(depth + 1, prev_end, best_cover, cover_size, current, best_combination);
+  bruteforceCover(depth + 1, prev_end, best_cover, cover_size, current, best_combinations);
 } // Bruteforce::bruteforceCover
 
 //******************************************************************************
@@ -99,26 +106,18 @@ void Greedy::greedyCover(int &best_cover, vector<Interval>& best_combination) {
 //******************************************************************************
 
 bool Dynamic::sigmaRho(int& sigma, int i, Repeat repeat) {
-  int shift = repeat.shift;
   int rho = (i - repeat.index + 1) % repeat.period;
   sigma = (i - repeat.index + 1) / repeat.period;
 
-  bool sigma_bool = false;
-
-  if (sigma >= 2 && sigma <= repeat.count) {
-    sigma_bool = true;
-    if (sigma < repeat.count) {
-      shift = repeat.period - 1;
-    }
-    
+  if (sigma < 2 || sigma > repeat.count) {
+    return false;
   }
-  if (sigma_bool && rho >= 0 && rho <= shift) {
-    // cout << "✅ " <<  " sigma= (" << i << " - " << repeat.index << " + 1) /" << repeat.period << " = " << sigma << endl;
-    // cout << "✅ " <<  " rho= (" << i << " - " << repeat.index << " + 1) %" << repeat.period << " = " << rho << endl;
+
+  int shift = (sigma < repeat.count) ? repeat.period - 1 : repeat.shift;
+
+  if (rho >= 0 && rho <= shift) {
     return true;
   }
-  // cout << "❌ " <<  " sigma= (" << i << " - " << repeat.index << " + 1) /" << repeat.period << " = " << sigma << endl;
-  // cout << "❌ " <<  " rho= (" << i << " - " << repeat.index << " + 1) %" << repeat.period << " = " << rho << endl;
   return false;
 
 } // Dynamic::sigmaRho
@@ -126,22 +125,20 @@ bool Dynamic::sigmaRho(int& sigma, int i, Repeat repeat) {
 //******************************************************************************
 
 void Dynamic::dynamicCover(int& best_cover) {
+  using namespace std::chrono;
+  auto time_a = high_resolution_clock::now();
+
+
   int length_S = S.length();
   int sigma = 5;
   int prev_size;
   int cover;
-  // int best_cover = -1;
-
-  // int size[length_S];
+  
   std::vector<int> size(length_S);
   size[0] = 0;
 
   for (int i = 1; i < length_S; i++) {
-    // cout << "*********************" << S.substr(0, i+ 1) << "*********************" << endl;
     for (const auto& repeat : repeats) {
-      // cout << "_____" << S.substr(repeat.index, repeat.period * repeat.count) << "_____" << endl;
-      // sig = sigmaCalc(sigma, i, repeat);
-      // rhoo = rhoCalc(i, repeat);
 
       if (sigmaRho(sigma, i, repeat)) {
         for (int l = 2; l <= sigma; l++) {
@@ -150,25 +147,26 @@ void Dynamic::dynamicCover(int& best_cover) {
           }
           else {
             prev_size = size[i - l * repeat.period];
-            // cout << l << " size[" << i - l * repeat.period << "] = " << prev_size << endl;
           }
           cover = prev_size + l * repeat.period;
-          // cout << "cover: " << cover << endl;
           if (cover > best_cover) {
             best_cover = cover;
           }
         }
       }
     }
-    // cout << "vorige cover: " << size[i-1] << endl;
     size[i] = max(size[i-1], best_cover);
-    // cout << "nieuw cover: " << size[i] << endl;
   }
   // for (int val : size) {
   //   cout << val << " ";
   // }
-  // cout << endl;
+  cout << endl;
   best_cover = size[length_S - 1];
+
+  auto time_b = chrono::high_resolution_clock::now();
+  duration<double> elapsed = time_b - time_a;
+  cout << "timer dynamic(): " << elapsed.count() << " seconds\n";
+
 } // Dynamic::dynamicCover
 
 

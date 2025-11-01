@@ -50,13 +50,13 @@ def compare_cover(word):
     start_cc = time.perf_counter() # start timer
 
     # get output repeats.cc
-    result = subprocess.run(
-        ["./repeats", word],
+    result_cc = subprocess.run(
+        ["./repeats", "bruteforce", word],
         text=True,
         capture_output=True
     )
 
-    cc_output = int(result.stdout)
+    cc_output = int(result_cc.stdout)
 
     end_cc = time.perf_counter()
     length = end_cc - start_cc
@@ -64,7 +64,7 @@ def compare_cover(word):
     minutes = int((length % 3600) // 60)
     seconds = int(length % 60)
     milliseconds = int((length * 1000) % 1000)
-    print(f"time cc: {hours:02d}:{minutes:02d}:{seconds:02d}:{milliseconds:03d}")
+    # print(f"time cc: {hours:02d}:{minutes:02d}:{seconds:02d}:{milliseconds:03d}")
 
     start_py = time.perf_counter() # start timer
 
@@ -77,7 +77,7 @@ def compare_cover(word):
     minutes = int((length % 3600) // 60)
     seconds = int(length % 60)
     milliseconds = int((length * 1000) % 1000)
-    print(f"time py: {hours:02d}:{minutes:02d}:{seconds:02d}:{milliseconds:03d}")
+    # print(f"time py: {hours:02d}:{minutes:02d}:{seconds:02d}:{milliseconds:03d}")
 
     # check whether output is the same
     if cc_output != py_output:
@@ -122,13 +122,23 @@ def test_dynamic(word):
     """output brute force vs greedy algorithms"""
 
     # get bruteforce output
-    result_a = subprocess.run(
-        ["./repeats", "bruteforce", word],
-        text=True,
-        capture_output=True
-    )
-    output_a = int(result_a.stdout)
-    print(output_a)
+    # result_a = subprocess.run(
+    #     ["./repeats", "bruteforce", word],
+    #     text=True,
+    #     capture_output=True
+    # )
+    print("*" * 80)
+    # lines = result_a.stdout.strip().split("\n")
+    # runtime_lines = [line for line in lines if line.startswith("timer")]
+    # print(f"{'Word':<15}: {word} - {len(word)}")
+    print(f"{'Word':<15}:  {len(word)}")
+    # for line in runtime_lines:
+    #     print(f"{' ':<15}{line}")
+    # print("_" * 50)
+
+
+    # output_a = int(result_a.stdout)
+    # print(output_a)
 
     # get greedy output
     result_b = subprocess.run(
@@ -136,16 +146,21 @@ def test_dynamic(word):
         text=True,
         capture_output=True
     )
-    output_b = int(result_b.stdout)
-    print(output_b)
+    lines = result_b.stdout.strip().split("\n")
+    runtime_lines = [line for line in lines if line.startswith("timer")]
+    for line in runtime_lines:
+        print(f"{' ':<15}{line}")
+
+    # output_b = int(result_b.stdout)
+    # print(output_b)
 
     # check whether output is the same
-    if output_a != output_b:
-        print(f"❌ ERROR for word '{word}'")
-        print(f"  bruteforce: {output_a}")
-        print(f"  dynamic    : {output_b}")
-    else:
-        print(f"✅ GOODD")
+    # if output_a != output_b:
+    #     print(f"❌ ERROR for word '{word}'")
+    #     print(f"  bruteforce: {output_a}")
+    #     print(f"  dynamic    : {output_b}")
+    # else:
+    #     print(f"✅ GOODD")
     
 
 
@@ -195,22 +210,25 @@ if __name__ == "__main__":
 
 
     # for word in non_isomorphic_binary_words(10):
+    #     # compare_cover(word)
     #     test_dynamic(word)
     
-    for word in non_isomorphic_binary_words_upto(10):
-        # print(word)
-        test_dynamic(word)
+    # for word in non_isomorphic_binary_words_upto(10):
+    #     # compare_cover(word)
+    #     test_dynamic(word)
 
     # for i in range(1, 6):
+    #     # compare_cover(nth_fibonacci_word(i))
     #     test_dynamic(nth_fibonacci_word(i))
 
-    # for i in range(10, 60, 10):
+    # for i in range(1000, 10000, 1000):
+    #     # compare_cover(fibonacci_word_upto(i))
     #     test_dynamic(fibonacci_word_upto(i))
+
+    test_dynamic(fibonacci_word_upto(10000))
+
     
     # for word in lyndon_words(10):
+    #     # compare_cover(word)
     #     test_dynamic(word)
 
-
-
-
-# ACAACACAACAACACAACACAACAACACAACAACACAACACAACAACACAACACAACAACACAACAACACAACACAACAACACAACAACACAACACAACA

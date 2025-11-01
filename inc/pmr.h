@@ -17,8 +17,9 @@ class PMR {
 
   public:
     // constructor: initializes the input string and calculates all repeats
-    PMR(const std::string& input)
-      : S(input), repeats(findRepeat(S)) {}
+    PMR(const string& input): S(input) {
+        repeats = findRepeat(S);
+    }
     
     // returns input string
     const string& getString() const { return S; }
@@ -44,6 +45,17 @@ class PMR {
     vector<vector<Interval>> getInterval(const vector<Repeat> repeats);
     
 }; // PMR
+
+
+class PMR_linear {
+  private:
+
+  public:
+    PMR_linear() {};
+
+    void fractorization ();
+
+}
 
 
 #endif
