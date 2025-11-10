@@ -110,23 +110,65 @@ bool Dynamic::sigmaRho(int& sigma, int i, Repeat repeat) {
   sigma = (i - repeat.index + 1) / repeat.period;
 
   if (sigma < 2 || sigma > repeat.count) {
+    // cout << "❌ " <<  " sigma= (" << i << " - " << repeat.index << " + 1) /" << repeat.period << " = " << sigma << endl;
+    // cout << "❌ " <<  " rho= (" << i << " - " << repeat.index << " + 1) %" << repeat.period << " = " << rho << endl;
     return false;
   }
 
   int shift = (sigma < repeat.count) ? repeat.period - 1 : repeat.shift;
 
   if (rho >= 0 && rho <= shift) {
+
+    // cout << "✅ " <<  " sigma= (" << i << " - " << repeat.index << " + 1) /" << repeat.period << " = " << sigma << endl;
+    // cout << "✅ " <<  " rho= (" << i << " - " << repeat.index << " + 1) %" << repeat.period << " = " << rho << endl;
     return true;
   }
+  // cout << "❌ " <<  " sigma= (" << i << " - " << repeat.index << " + 1) /" << repeat.period << " = " << sigma << endl;
+  // cout << "❌ " <<  " rho= (" << i << " - " << repeat.index << " + 1) %" << repeat.period << " = " << rho << endl;
   return false;
 
 } // Dynamic::sigmaRho
 
+
 //******************************************************************************
 
-void Dynamic::dynamicCover(int& best_cover) {
-  using namespace std::chrono;
-  auto time_a = high_resolution_clock::now();
+Interval Dynamic::findCombination(int& i, vector<int> size) {
+  Interval interval;
+  int start_interval, end_interval, end_repeat, start_repeat, length;
+  if (size[i] == 0) {
+    interval.length = i + 1;
+    interval.group = - 1;
+    i = 0;
+    return interval;
+  }
+  for (int r = 0; r < repeats.size(); ++r) {
+    const Repeat& repeat = repeats[r];
+    end_repeat = repeat.index + (repeat.count * repeat.period) + repeat.shift - 1;
+    start_repeat = repeat.index;
+    length = repeat.count * repeat.period;
+
+    if (i >= start_repeat && i <= end_repeat) { 
+      while (length/repeat.period >= 2) {
+        if (size[i - length] + length == size[i]) {
+          interval = {i - length + 1, i, length, r};
+          i = i - length + 1;
+          return interval;
+        }
+        length = length - repeat.period;
+      }
+    }
+  }
+  interval.length = 1;
+  interval.group = - 1;
+  return interval;
+
+}
+
+//******************************************************************************
+
+void Dynamic::dynamicCover(int& best_cover, vector<vector<Interval>>& best_combinations) {
+  // using namespace std::chrono;
+  // auto time_a = high_resolution_clock::now();
 
 
   int length_S = S.length();
@@ -138,34 +180,53 @@ void Dynamic::dynamicCover(int& best_cover) {
   size[0] = 0;
 
   for (int i = 1; i < length_S; i++) {
+    // cout << "*********************" << S.substr(0, i+ 1) << "*********************" << endl;
     for (const auto& repeat : repeats) {
-
+      // cout << "_____" << S.substr(repeat.index, repeat.period * repeat.count) << "_____" << endl;
       if (sigmaRho(sigma, i, repeat)) {
         for (int l = 2; l <= sigma; l++) {
-          if (i + l * repeat.period < 0) {
+          if (i - l * repeat.period < 0) {
             prev_size = 0;
+            // break; mogelijk
           }
           else {
             prev_size = size[i - l * repeat.period];
+            // cout << l << " size[" << i - l * repeat.period << "] = " << prev_size << endl;
           }
           cover = prev_size + l * repeat.period;
+          // cout << "cover: " << cover << endl;
           if (cover > best_cover) {
             best_cover = cover;
           }
         }
       }
     }
+    // cout << "vorige cover: " << size[i-1] << endl;
     size[i] = max(size[i-1], best_cover);
+    // cout << "nieuw cover: " << size[i] << endl;
   }
   // for (int val : size) {
   //   cout << val << " ";
   // }
-  cout << endl;
+  // cout << endl;
   best_cover = size[length_S - 1];
 
-  auto time_b = chrono::high_resolution_clock::now();
-  duration<double> elapsed = time_b - time_a;
-  cout << "timer dynamic(): " << elapsed.count() << " seconds\n";
+  Interval interval;
+  vector<Interval> combination;
+
+
+  for (int i = length_S - 1; i >= 0; i--) {
+    interval = findCombination(i, size);
+    combination.insert(combination.begin(), interval); 
+  }
+
+  best_combinations.push_back(combination);
+
+
+
+  // auto time_b = chrono::high_resolution_clock::now();
+  // duration<double> elapsed = time_b - time_a;
+  // cout << "timer dynamic(): " << elapsed.count() << " seconds\n";
 
 } // Dynamic::dynamicCover
 

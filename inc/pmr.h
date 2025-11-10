@@ -53,9 +53,11 @@ class PMR_linear {
   public:
     PMR_linear() {};
 
+    void suffixTree();
+
     void fractorization ();
 
-}
+};
 
 
 #endif

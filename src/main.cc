@@ -14,7 +14,8 @@ using namespace std;
 
 void printOutput(const string S, 
                 const int best_cover, 
-                const vector<vector<Interval>>best_combinations) {
+                const vector<vector<Interval>>best_combinations,
+                vector<Repeat> repeats) {
 
   // print indeces
   for (size_t i = 0; i < S.length(); ++i) {
@@ -37,7 +38,14 @@ void printOutput(const string S,
   for (long unsigned int i = 0; i < best_combinations.size(); ++i) {
     cout << "combination " << i + 1 << ": ";
     for (const auto& interval : best_combinations[i]) {
-      cout << "[" << interval.start << "," << interval.end << "] ";
+      if (interval.group == -1) { // no group
+        cout << string(interval.length, '-');
+      }
+      else {
+        cout << S.substr(interval.start ,repeats[interval.group].period) << "[" << interval.length/repeats[interval.group].period << "]";
+      }
+
+      // cout << "[" << interval.start << "," << interval.end << "] ";
     }
   }
   cout << endl;
@@ -67,14 +75,14 @@ int main(int argc, char* argv[]) {
   if (algorithm == "bruteforce") {
     Bruteforce bruteforce(pmr, repeats);
 
-    using namespace std::chrono;
-    auto time_a = high_resolution_clock::now();
+    // using namespace std::chrono;
+    // auto time_a = high_resolution_clock::now();
 
     bruteforce.bruteforceCover(0, -1, best_cover, 0, current, best_combinations);
 
-    auto time_b = chrono::high_resolution_clock::now();
-    duration<double> elapsed = time_b - time_a;
-    cout << "timer bruteforceCover(): " << elapsed.count() << " seconds\n";
+    // auto time_b = chrono::high_resolution_clock::now();
+    // duration<double> elapsed = time_b - time_a;
+    // cout << "timer bruteforceCover(): " << elapsed.count() << " seconds\n";
   }
   else if (algorithm == "greedy") {
     Greedy greedy(pmr, repeats);
@@ -83,7 +91,7 @@ int main(int argc, char* argv[]) {
   else if (algorithm == "dynamic") {
     if (!S.empty()) {
       Dynamic dynamic(S, repeats);
-      dynamic.dynamicCover(best_cover);
+      dynamic.dynamicCover(best_cover, best_combinations);
       // cout << best_cover << endl;
     }
   }
@@ -92,7 +100,7 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  printOutput(S, best_cover, best_combinations);
+  printOutput(S, best_cover, best_combinations, repeats);
 
   return 0;
 }

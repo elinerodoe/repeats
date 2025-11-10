@@ -58,8 +58,11 @@ class Dynamic {
     Dynamic(const string& input, const vector<Repeat>& r)
       : S(input), repeats(r) {}
 
+    // find find combination of maximal cover
+    Interval findCombination(int& i, vector<int> size);
+
     // dynamic algorithm to find the maximal cover
-    void dynamicCover(int& best_cover);
+    void dynamicCover(int& best_cover, vector<vector<Interval>>& best_combinations);
 
     // helper function to checks the sigma/rho condition 
     bool sigmaRho(int& sigma, int i, Repeat repeat);

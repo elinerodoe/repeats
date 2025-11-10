@@ -40,8 +40,8 @@ bool PMR::isPrimitive (const std::vector<Repeat>& repeats,
 //******************************************************************************
 
 vector<Repeat> PMR::findRepeat(const string S) {
-  using namespace std::chrono;
-  auto time_a = high_resolution_clock::now();
+  // using namespace std::chrono;
+  // auto time_a = high_resolution_clock::now();
 
   int max_period;
   int count;
@@ -79,9 +79,9 @@ vector<Repeat> PMR::findRepeat(const string S) {
     }
   }
 
-  auto time_b = chrono::high_resolution_clock::now();
-  duration<double> elapsed = time_b - time_a;
-  cout << "timer findRepeat(): " << elapsed.count() << " seconds\n";
+  // auto time_b = chrono::high_resolution_clock::now();
+  // duration<double> elapsed = time_b - time_a;
+  // cout << "timer findRepeat(): " << elapsed.count() << " seconds\n";
 
   return repeats;
 } // PMR::findRepeat
@@ -102,8 +102,8 @@ void PMR::shiftIntervals(vector<vector<Interval>>& covers,
 //******************************************************************************
 
 vector<vector<Interval>> PMR::getInterval(const vector<Repeat> repeats){
-  using namespace std::chrono;
-  auto time_a = high_resolution_clock::now();
+  // using namespace std::chrono;
+  // auto time_a = high_resolution_clock::now();
 
   vector<vector<Interval>>covers;
   int start;
@@ -147,9 +147,20 @@ vector<vector<Interval>> PMR::getInterval(const vector<Repeat> repeats){
       }
     }
   }
-  auto time_b = chrono::high_resolution_clock::now();
-  duration<double> elapsed = time_b - time_a;
-  cout << "timer getInterval(): " << elapsed.count() << " seconds\n";
+  // auto time_b = chrono::high_resolution_clock::now();
+  // duration<double> elapsed = time_b - time_a;
+  // cout << "timer getInterval(): " << elapsed.count() << " seconds\n";
 
   return covers;
 } // PMR::getInterval
+
+
+
+void PMR_linear::suffixTree() {
+  cout << "suffixTree" << endl;
+} // PMR_linear:: suffixTree
+
+void PMR_linear::fractorization() {
+  cout << "fractorization" << endl;
+} // PMR_linear:: fractorization
+
