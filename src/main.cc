@@ -32,7 +32,6 @@ void printOutput(const string S,
   // print maximal cover
   cout << "maximal cover: " << best_cover << endl;
 
-  cout << best_cover << endl;
 
   // print combinations
   for (long unsigned int i = 0; i < best_combinations.size(); ++i) {
@@ -44,11 +43,10 @@ void printOutput(const string S,
       else {
         cout << S.substr(interval.start ,repeats[interval.group].period) << "[" << interval.length/repeats[interval.group].period << "]";
       }
-
-      // cout << "[" << interval.start << "," << interval.end << "] ";
     }
+    cout << endl;
   }
-  cout << endl;
+  
 
 }
 
@@ -92,14 +90,18 @@ int main(int argc, char* argv[]) {
     if (!S.empty()) {
       Dynamic dynamic(S, repeats);
       dynamic.dynamicCover(best_cover, best_combinations);
-      // cout << best_cover << endl;
+    }
+  }
+  else if (algorithm == "dynamic_l") {
+    if (!S.empty()) {
+      Dynamic dynamic(S, repeats);
+      dynamic.dynamicCover_l(best_cover, best_combinations);
     }
   }
   else {
     cerr << "Unknown mode: " << algorithm << endl;
     return 1;
   }
-
   printOutput(S, best_cover, best_combinations, repeats);
 
   return 0;

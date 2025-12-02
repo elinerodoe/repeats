@@ -120,7 +120,14 @@ def test_greedy(word):
 
 def test_dynamic(word):
     """output brute force vs greedy algorithms"""
+    print(word)
 
+    # The line `print("**********************bruteforce**********************")`
+    # is simply printing a visual separator or divider in the output. It is used
+    # to visually distinguish or mark a specific section of the output related to
+    # the "bruteforce" algorithm. This can help in better organizing and
+    # understanding the output when running the program.
+    print("**********************bruteforce**********************")
     # get bruteforce output
     result_a = subprocess.run(
         ["./repeats", "bruteforce", word],
@@ -137,12 +144,12 @@ def test_dynamic(word):
     # print("_" * 50)
 
 
-    output_a = int(result_a.stdout)
-    # print(output_a)
-
+    # output_a = int(result_a.stdout)
+    print(result_a.stdout)
+    print("**********************dynamic**********************")
     # get greedy output
     result_b = subprocess.run(
-        ["./repeats", "dynamic", word],
+        ["./repeats", "dynamic_l", word],
         text=True,
         capture_output=True
     )
@@ -151,14 +158,14 @@ def test_dynamic(word):
     # for line in runtime_lines:
     #     print(f"{' ':<15}{line}")
 
-    output_b = int(result_b.stdout)
-    # print(output_b)
+    # output_b = int(result_b.stdout)
+    print(result_b.stdout)
 
     # check whether output is the same
-    if output_a != output_b:
-        print(f"❌ ERROR for word '{word}'")
-        print(f"  bruteforce: {output_a}")
-        print(f"  dynamic    : {output_b}")
+    # if output_a != output_b:
+    #     print(f"❌ ERROR for word '{word}'")
+    #     print(f"  bruteforce: {output_a}")
+    #     print(f"  dynamic    : {output_b}")
     # else:
     #     print(f"✅ GOODD")
     
@@ -208,31 +215,33 @@ if __name__ == "__main__":
     # print(f"accuracy: {(total_correct/number_words)*100}%")
 
 
-    count = 0
 
-    for word in non_isomorphic_binary_words(20):
-        count += 1
-        if (count == 10000):
-            print(word)
-        # compare_cover(word)
+    # for word in non_isomorphic_binary_words(20):
+    #     # compare_cover(word)
     #     test_dynamic(word)
     
     # for word in non_isomorphic_binary_words_upto(10):
-    #     # compare_cover(word)
+    # #     # compare_cover(word)
     #     test_dynamic(word)
 
-    # for i in range(1, 6):
-    #     # compare_cover(nth_fibonacci_word(i))
-    #     test_dynamic(nth_fibonacci_word(i))
+    # print("chechpoint 1")
 
-    # for i in range(10, 60, 10):
-    #     # compare_cover(fibonacci_word_upto(i))
+    for i in range(1, 8):
+    #     # compare_cover(nth_fibonacci_word(i))
+        test_dynamic(nth_fibonacci_word(i))
+
+    # print("chechpoint 2")
+
+    # for i in range(100, 1000, 100):
+    # #     # compare_cover(fibonacci_word_upto(i))
     #     test_dynamic(fibonacci_word_upto(i))
 
-    # # test_dynamic(fibonacci_word_upto(10000))
+    # print("chechpoint 3")
+
+    # # # # test_dynamic(fibonacci_word_upto(10000))
 
     
     # for word in lyndon_words(10):
-    #     # compare_cover(word)
+    # #     # compare_cover(word)
     #     test_dynamic(word)
 

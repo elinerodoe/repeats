@@ -110,25 +110,54 @@ bool Dynamic::sigmaRho(int& sigma, int i, Repeat repeat) {
   sigma = (i - repeat.index + 1) / repeat.period;
 
   if (sigma < 2 || sigma > repeat.count) {
-    // cout << "❌ " <<  " sigma= (" << i << " - " << repeat.index << " + 1) /" << repeat.period << " = " << sigma << endl;
-    // cout << "❌ " <<  " rho= (" << i << " - " << repeat.index << " + 1) %" << repeat.period << " = " << rho << endl;
     return false;
   }
 
   int shift = (sigma < repeat.count) ? repeat.period - 1 : repeat.shift;
 
   if (rho >= 0 && rho <= shift) {
-
-    // cout << "✅ " <<  " sigma= (" << i << " - " << repeat.index << " + 1) /" << repeat.period << " = " << sigma << endl;
-    // cout << "✅ " <<  " rho= (" << i << " - " << repeat.index << " + 1) %" << repeat.period << " = " << rho << endl;
     return true;
   }
-  // cout << "❌ " <<  " sigma= (" << i << " - " << repeat.index << " + 1) /" << repeat.period << " = " << sigma << endl;
-  // cout << "❌ " <<  " rho= (" << i << " - " << repeat.index << " + 1) %" << repeat.period << " = " << rho << endl;
   return false;
 
 } // Dynamic::sigmaRho
 
+
+
+
+//******************************************************************************
+
+void Dynamic::findAllCombinations(int i, const vector<int>& size, vector<Interval>& current, vector<vector<Interval>>& all_combinations, int& group) {
+  if (i <= 0) {
+    all_combinations.push_back(current);
+    return;
+  }
+
+  for (int r = 0; r < repeats.size(); ++r) {
+    const Repeat& repeat = repeats[r];
+    int end_repeat = repeat.index + (repeat.count * repeat.period) + repeat.shift - 1;
+    int start_repeat = repeat.index;
+    int length = repeat.count * repeat.period;
+    int len = length;
+
+    if (group != r && i >= start_repeat && i <= end_repeat) {
+      while (len / repeat.period >= 2) {
+        if (i - len + 1 >= start_repeat && size[i - len] + len == size[i]) {
+          Interval interval = {i - len + 1, i, len, r};
+          group = r;
+          current.insert(current.begin(), interval);
+          findAllCombinations(i - len, size, current, all_combinations, group);
+          current.erase(current.begin());
+        }
+        len -= repeat.period;
+      }
+    }
+  }
+  if (size[i] == size[i - 1]) {
+    group = -1;
+    findAllCombinations(i - 1, size, current, all_combinations, group); // group??
+  }
+}
 
 //******************************************************************************
 
@@ -166,6 +195,57 @@ Interval Dynamic::findCombination(int& i, vector<int> size) {
 
 //******************************************************************************
 
+void Dynamic::bestCount(int count, int period, int i, vector<int>size, int& best_cover) {
+  int prev_size = 0;
+  int cover;
+  if (i - count * period > 0) {
+    prev_size = size[i - count * period];
+  }
+  cover = prev_size + count * period;
+  if (cover > best_cover) {
+    best_cover = cover;
+  }
+} // Dynamic::bestCount
+
+//******************************************************************************
+
+void Dynamic::dynamicCover_l(int& best_cover, vector<vector<Interval>>& best_combinations) {
+  // using namespace std::chrono;
+  // auto time_a = high_resolution_clock::now();
+
+
+  int length_S = S.length();
+  int sigma;
+  int prev_size;
+  
+  std::vector<int> size(length_S);
+  size[0] = 0;
+
+  for (int i = 1; i < length_S; i++) {
+    for (const auto& repeat : repeats) {
+      if (sigmaRho(sigma, i, repeat)) {
+        if (sigma > 1) {
+          bestCount(2, repeat.period, i, size, best_cover);
+
+          if (sigma > 2) {
+            bestCount(3, repeat.period, i, size, best_cover);
+          }
+        }
+      }
+    }
+    size[i] = max(size[i-1], best_cover);
+  }
+  best_cover = size[length_S - 1];
+  int group = -1;
+  vector<Interval> current;
+  findAllCombinations(length_S - 1, size, current, best_combinations, group);
+
+} // Dynamic::dynamicCover_l
+
+
+
+//******************************************************************************
+
 void Dynamic::dynamicCover(int& best_cover, vector<vector<Interval>>& best_combinations) {
   // using namespace std::chrono;
   // auto time_a = high_resolution_clock::now();
@@ -175,40 +255,30 @@ void Dynamic::dynamicCover(int& best_cover, vector<vector<Interval>>& best_combi
   int sigma = 5;
   int prev_size;
   int cover;
+  int rho;
   
   std::vector<int> size(length_S);
   size[0] = 0;
 
   for (int i = 1; i < length_S; i++) {
-    // cout << "*********************" << S.substr(0, i+ 1) << "*********************" << endl;
     for (const auto& repeat : repeats) {
-      // cout << "_____" << S.substr(repeat.index, repeat.period * repeat.count) << "_____" << endl;
       if (sigmaRho(sigma, i, repeat)) {
         for (int l = 2; l <= sigma; l++) {
           if (i - l * repeat.period < 0) {
             prev_size = 0;
-            // break; mogelijk
           }
           else {
             prev_size = size[i - l * repeat.period];
-            // cout << l << " size[" << i - l * repeat.period << "] = " << prev_size << endl;
           }
           cover = prev_size + l * repeat.period;
-          // cout << "cover: " << cover << endl;
           if (cover > best_cover) {
             best_cover = cover;
           }
         }
       }
     }
-    // cout << "vorige cover: " << size[i-1] << endl;
     size[i] = max(size[i-1], best_cover);
-    // cout << "nieuw cover: " << size[i] << endl;
   }
-  // for (int val : size) {
-  //   cout << val << " ";
-  // }
-  // cout << endl;
   best_cover = size[length_S - 1];
 
   Interval interval;
@@ -229,6 +299,13 @@ void Dynamic::dynamicCover(int& best_cover, vector<vector<Interval>>& best_combi
   // cout << "timer dynamic(): " << elapsed.count() << " seconds\n";
 
 } // Dynamic::dynamicCover
+
+
+
+
+
+
+
 
 
 
