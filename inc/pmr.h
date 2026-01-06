@@ -3,11 +3,12 @@
 
 #include "types.h"
 
- #include <iostream>
- #include <vector>
- #include <string>
- #include <cmath>
- #include <algorithm>
+#include <iostream>
+#include <vector>
+#include <string>
+#include <cmath>
+#include <algorithm>
+
 using namespace std;
 
 class PMR {
@@ -51,13 +52,12 @@ class PMR_linear {
   private:
 
   public:
-    PMR_linear() {};
-
-    void suffixTree();
-
-    void fractorization ();
-
+    void LZ77Factorization();
 };
+
+
+
+
 
 
 #endif

@@ -1,6 +1,8 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#define MAX_CHAR 256
+
 struct Repeat {
     int index;
     int period;

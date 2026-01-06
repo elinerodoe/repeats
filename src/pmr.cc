@@ -1,12 +1,14 @@
 #include "../inc/pmr.h"
 #include "../inc/types.h"
 
- #include <iostream>
- #include <vector>
- #include <string>
- #include <cmath>
- #include <algorithm>
- #include <chrono> // voor timing
+#include <iostream>
+#include <vector>
+#include <string>
+#include <cmath>
+#include <algorithm>
+#include <cstring>
+#include <cstdlib>
+#include <chrono> // voor timing
 using namespace std;
 
 bool PMR::isRotation(const std::vector<Repeat>& repeats, const int i, const int j) {
@@ -40,14 +42,15 @@ bool PMR::isPrimitive (const std::vector<Repeat>& repeats,
 //******************************************************************************
 
 vector<Repeat> PMR::findRepeat(const string S) {
-  // using namespace std::chrono;
-  // auto time_a = high_resolution_clock::now();
-
   int max_period;
   int count;
   int shift;
   string unit;
   int length_S = S.length();
+  int total_PMR = 0;
+
+  double teller = 0;
+  double count_teller = 0;
 
   for (int i = 0; i < length_S; i++) {
     max_period = (length_S - i) / 2;
@@ -74,17 +77,19 @@ vector<Repeat> PMR::findRepeat(const string S) {
           shift++;
         }
         repeats.push_back({i, j, count, shift});
-        // cout << "(" << i << "," << j << "," << count << "," << shift << ") ";
+        total_PMR++;
+        teller++;
+        count_teller += count;
+        // cout << count << endl;
+        // cout << "(" << i << "," << j << "," << count << "," << shift << ") " << endl;
       }
     }
   }
-
-  // auto time_b = chrono::high_resolution_clock::now();
-  // duration<double> elapsed = time_b - time_a;
-  // cout << "timer findRepeat(): " << elapsed.count() << " seconds\n";
-
+  cout << count_teller/teller << endl;
+  // cout << total_PMR << endl;
   return repeats;
 } // PMR::findRepeat
+
 
 //******************************************************************************
 
@@ -151,16 +156,18 @@ vector<vector<Interval>> PMR::getInterval(const vector<Repeat> repeats){
   // duration<double> elapsed = time_b - time_a;
   // cout << "timer getInterval(): " << elapsed.count() << " seconds\n";
 
+
   return covers;
 } // PMR::getInterval
 
 
+// ############################################################################
 
-void PMR_linear::suffixTree() {
-  cout << "suffixTree" << endl;
-} // PMR_linear:: suffixTree
+// Lineair PMR algorithm
 
-void PMR_linear::fractorization() {
-  cout << "fractorization" << endl;
-} // PMR_linear:: fractorization
+// ############################################################################
+
+void PMR_linear::LZ77Factorization() {
+  cout << "LZ77Factorization" << endl;
+}
 

@@ -41,7 +41,7 @@ class Greedy {
       : covers(pmr.getInterval(repeats)) {}
 
     // greedy algorithm to find the maximal cover
-    void greedyCover(int &best_cover, vector<Interval>& best_combination);
+    void greedyCover(int &best_cover, vector<vector<Interval>>& best_combinations, string version);
 
     // checks whether new_cover overlaps with cover
     bool overlaps(const Interval& cover, const Interval& new_cover);
@@ -62,7 +62,7 @@ class Dynamic {
     Interval findCombination(int& i, vector<int> size);
 
     // find all possible combination with maximal cover
-    void findAllCombinations(int i, const vector<int>& size, vector<Interval>& current, vector<vector<Interval>>& all_combinations, int& group);
+    void findAllCombinations(int i, const vector<int>& size, vector<Interval>& current, vector<vector<Interval>>& all_combinations, int& group, int maximal_cover, int &cover);
 
     // helper function to checks the sigma/rho condition 
     bool sigmaRho(int& sigma, int i, Repeat repeat);

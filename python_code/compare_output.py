@@ -2,246 +2,266 @@ import subprocess
 from cover import find_pmrs, brute_cover
 from words import non_isomorphic_binary_words, non_isomorphic_binary_words_upto, nth_fibonacci_word, fibonacci_word_upto, lyndon_words
 import time
+import re
+import heapq
+import subprocess
 
 
-def convert_output(output):
-    """convert repeats.cc output into Python tuples"""
-    results = []
+def improve_output(s):
+    matches = list(re.finditer(r"\[(\d+)\]", s))
 
-    # convert (0,1,2,0) (3,2,3,1) to ["(0,1,2,0)", "(3,2,3,1)"]
-    for part in output.strip().split():
-        
-        # remove ( )
-        part = part.strip("()")
+    for m in reversed(matches):
+        waarde = int(m.group(1))
+        start, end = m.start(), m.end()
 
-        # convert "(0,1,2,0)" to ["0", "1", "2", "0"]
-        values = tuple(map(int, part.split(",")))
-        results.append(values)
-    return results
+        if waarde == 1:
+            s = s[:start] + "." + s[end:]
+        else:
+            s = s[:end] + "." + s[end:]
 
-
-def compare_pmr(word):
-    """compare output primitive maximal repeats"""
-
-    # get output repeats.cc
-    result = subprocess.run(
-        ["./repeats", word],
-        text=True,
-        capture_output=True
-    )
-    cc_output = convert_output(result.stdout)
-
-    # get output cover.py
-    py_output = find_pmrs(word)
-
-    # sort output repeats.py and cover.py
-    cc_output.sort()
-    py_output.sort()
-
-    # check whether output is the same
-    if cc_output != py_output:
-        print(f"ERROR for word '{word}'")
-        print(f"  C++:    {cc_output}")
-        print(f"  Python: {py_output}")
+    return s
 
 
-def compare_cover(word):
-    """compare output of brute force maximal cover"""
-    start_cc = time.perf_counter() # start timer
+def som_getallen_in_string(s):
+    totaal = 0
+    vorige_einde = 0
 
-    # get output repeats.cc
-    result_cc = subprocess.run(
-        ["./repeats", "bruteforce", word],
+    for m in re.finditer(r"\d+", s):
+        waarde = int(m.group())
+        if (vorige_einde == 0):
+            karakters_ervoor = m.start() - vorige_einde - 1
+        else:
+            karakters_ervoor = m.start() - vorige_einde - 2
+
+        if (waarde != 1):
+            totaal += karakters_ervoor * waarde
+        vorige_einde = m.end()
+
+    return totaal
+
+
+def check_output(sequence, output_HGVS, correct, correct_cover, incorrect_s, incorrect_d):
+    output_dynamic = subprocess.run(
+        ["./repeats", "dynamic_l", sequence],
         text=True,
         capture_output=True
     )
 
-    cc_output = int(result_cc.stdout)
+    output_dynamic_l = output_dynamic.stdout.split("_")
+    maximal_cover_dynamic = int(output_dynamic_l[0])
+    cover_dynamic = output_dynamic_l[1]
 
-    end_cc = time.perf_counter()
-    length = end_cc - start_cc
-    hours = int(length // 3600)
-    minutes = int((length % 3600) // 60)
-    seconds = int(length % 60)
-    milliseconds = int((length * 1000) % 1000)
-    # print(f"time cc: {hours:02d}:{minutes:02d}:{seconds:02d}:{milliseconds:03d}")
+    length_sequence = len(sequence)
+    marge = maximal_cover_dynamic * 0.1
 
-    start_py = time.perf_counter() # start timer
+    maximal_cover_HGVS = som_getallen_in_string(output_HGVS)
+    cover_HGVS = improve_output(output_HGVS)
 
-    pmrs = sorted(find_pmrs(word))
-    py_output = brute_cover(word, pmrs)
+    print("____________________________________________________________________________________")
+    print("sequence: " + sequence)
 
-    end_py = time.perf_counter()
-    length = end_py - start_py
-    hours = int(length // 3600)
-    minutes = int((length % 3600) // 60)
-    seconds = int(length % 60)
-    milliseconds = int((length * 1000) % 1000)
-    # print(f"time py: {hours:02d}:{minutes:02d}:{seconds:02d}:{milliseconds:03d}")
+    if (maximal_cover_dynamic == maximal_cover_HGVS):
+        if (cover_dynamic == cover_HGVS): # equal maximal cover and cover
+            correct += 1
+            print("✅✅ correct")
+        else: # equal maximal cover and different cover
+            correct_cover += 1
+            print("✅ correct - andere cover")
+            print(f"output dynamic: {cover_dynamic} ({maximal_cover_dynamic})")
+            print(f"output HGVS:    {cover_HGVS} ({maximal_cover_HGVS})")
+    else: # different maximal cover
+        if (maximal_cover_HGVS >= (maximal_cover_dynamic - marge)): # maximal cover small difference
+            incorrect_d += 1
+            print("❌/✅ andere cover")
+            print(f"output dynamic: {cover_dynamic} ({maximal_cover_dynamic})")
+            print(f"output HGVS:    {cover_HGVS} ({maximal_cover_HGVS})")
+        else: # maximal cover with high difference
+            incorrect_s += 1
+            print("❌ slechte cover HGVS")
+            print(f"output dynamic: {cover_dynamic} ({maximal_cover_dynamic})")
+            print(f"output HGVS:    {cover_HGVS} ({maximal_cover_HGVS})")
 
-    # check whether output is the same
-    if cc_output != py_output:
-        print(f"❌ ERROR for word '{word}'")
-        print(f"  C++:    {cc_output}")
-        print(f"  Python: {py_output}")
-    else:
-        print(f"✅ GOODD")
-    
+    return correct, correct_cover, incorrect_s, incorrect_d 
 
 
-def test_greedy(word):
+def exp_mixed(filename):
+    total = 0
+    count = 0
+    correct = 0
+    correct_cover = 0
+    incorrect_s = 0
+    incorrect_d = 0
+    with open(filename, "r") as file:
+        for line in file:
+            total += 1
+
+            # extract sequence from file
+            raw_sequence = line.split()[1]
+            sequence = raw_sequence.split("/")[1]
+            correct_sequence = sequence[:-1]
+
+            # extract output HGVS from file
+            raw_output = line.split()[0]
+            output = raw_output[15:]
+            match = re.match(r"(\d+)(?:_(\d+))?([A-Za-z].*)", output)
+            output_HGVS = match.group(3)
+
+            correct, correct_cover, incorrect_s, incorrect_d = check_output(correct_sequence, output_HGVS, correct, correct_cover, incorrect_s, incorrect_d)
+
+    print("total: " + str(total))    
+    print("count: " + str(count))
+    print("correct: " + str(correct))
+    print("correct cover: " + str(correct_cover))
+    print("incorrect_s: " + str(incorrect_s))
+    print("incorrect_d: " + str(incorrect_d))
+
+
+
+def run_algorithm(word, algorithm):
     """output brute force vs greedy algorithms"""
 
-    # get bruteforce output
-    result_bf = subprocess.run(
-        ["./repeats", "bruteforce", word],
+    raw_output = subprocess.run(
+        ["./repeats", algorithm, word],
         text=True,
         capture_output=True
     )
-    output_bf = int(result_bf.stdout)
+    output = raw_output.stdout.split("_")
 
-    # get greedy output
-    result_greedy = subprocess.run(
-        ["./repeats", "greedy", word],
-        text=True,
-        capture_output=True
-    )
-    output_greedy = int(result_greedy.stdout)
+    print(f"runtime PMR: {float(output[0])}")
+    print(f"runtime position: {float(output[1])}")
+    print(f"runtime length: {float(output[2])}")
+    print(f"runtime dynamic: {float(output[3])}")
+    print(f"runtime dynamic_l: {float(output[4])}")
 
-    # check whether output is the same
-    if output_bf != output_greedy:
-        print(f"❌ ERROR for word '{word}'")
-        print(f"  bruteforce: {output_bf}")
-        print(f"  greedy    : {output_greedy}")
-    else:
-        print(f"✅ GOODD")
+    # return output.stdout
+    # return float(output.stdout)
+
+
+def exp_runtime(algorithm, length_word):
+    """run time experiment"""
+    total_words = 0
+    runtime = 0
+
+    print(f"******************************{algorithm}******************************")
+
+    for word in non_isomorphic_binary_words(length_word):
+        total_words += 1
+        runtime += run_algorithm(word, algorithm)
+
+    total_words += 1
+    runtime += run_algorithm(fibonacci_word_upto(length_word), algorithm)    
+    run_algorithm(fibonacci_word_upto(length_word), algorithm)    
+
+    for word in lyndon_words(length_word):
+        total_words += 1
+        runtime += run_algorithm(word, algorithm)
+
+    print(f"total words: {total_words}")
+    print(f"runtime: {runtime}")
+    print(f"average runtime per word: {runtime/total_words}\n")
+
+
+def run_greedy_test(word):
+    fout_position = 0
+    fout_length = 0
+    tot_fout_position = 0
+    tot_fout_length = 0
+
+    output = run_algorithm(word, "greedy_position")
+    output_greedy = output.split("_")
+    maximal_cover_greedy = int(output_greedy[0])
+    cover_greedy = output_greedy[1]
+
+    output = run_algorithm(word, "greedy_length")
+    output_greedy_l = output.split("_")
+    maximal_cover_greedy_l = int(output_greedy_l[0])
+    cover_greedy_l = output_greedy_l[1]
+
+    output = run_algorithm(word, "dynamic_l")
+    output_dynamic = output.split("_")
+    maximal_cover_dynamic = int(output_dynamic[0])
+    cover_dynamic = output_dynamic[1]
+
+    if ((maximal_cover_greedy != maximal_cover_dynamic) or (maximal_cover_greedy_l != maximal_cover_dynamic)):
+        print("___________________________________________________________")
+        print(word)
+        print("dynamic: ")
+        print("       - maximal cover: " + str(maximal_cover_dynamic))
+        print("       - cover: " + str(cover_dynamic))
+
+    if (maximal_cover_greedy != maximal_cover_dynamic):
+        fout_position += 1
+        tot_fout_position += maximal_cover_dynamic - maximal_cover_greedy
+        print("greedy position: ")
+        print("       - maximal cover: " + str(maximal_cover_greedy))
+        print("       - cover: " + str(cover_greedy))
+
+    if (maximal_cover_greedy_l != maximal_cover_dynamic):
+        fout_length += 1
+        tot_fout_length += maximal_cover_dynamic - maximal_cover_greedy_l
+        print("greedy length: ")
+        print("       - maximal cover: " + str(maximal_cover_greedy_l))
+        print("       - cover: " + str(cover_greedy_l))
     
-    return output_bf - output_greedy
-
-def test_dynamic(word):
-    """output brute force vs greedy algorithms"""
-    print(word)
-
-    # The line `print("**********************bruteforce**********************")`
-    # is simply printing a visual separator or divider in the output. It is used
-    # to visually distinguish or mark a specific section of the output related to
-    # the "bruteforce" algorithm. This can help in better organizing and
-    # understanding the output when running the program.
-    print("**********************bruteforce**********************")
-    # get bruteforce output
-    result_a = subprocess.run(
-        ["./repeats", "bruteforce", word],
-        text=True,
-        capture_output=True
-    )
-    # print("*" * 80)
-    # lines = result_a.stdout.strip().split("\n")
-    # runtime_lines = [line for line in lines if line.startswith("timer")]
-    # print(f"{'Word':<15}: {word} - {len(word)}")
-    # print(f"{'Word':<15}:  {len(word)}")
-    # for line in runtime_lines:
-    #     print(f"{' ':<15}{line}")
-    # print("_" * 50)
+    return (fout_position, fout_length, tot_fout_position, tot_fout_length)
 
 
-    # output_a = int(result_a.stdout)
-    print(result_a.stdout)
-    print("**********************dynamic**********************")
-    # get greedy output
-    result_b = subprocess.run(
-        ["./repeats", "dynamic_l", word],
-        text=True,
-        capture_output=True
-    )
-    # lines = result_b.stdout.strip().split("\n")
-    # runtime_lines = [line for line in lines if line.startswith("timer")]
-    # for line in runtime_lines:
-    #     print(f"{' ':<15}{line}")
 
-    # output_b = int(result_b.stdout)
-    print(result_b.stdout)
+def exp_greedy(length_word):
+    total_words = 0
+    fout_position = 0
+    fout_length = 0
+    totaal_fout_position = 0
+    totaal_fout_length = 0
 
-    # check whether output is the same
-    # if output_a != output_b:
-    #     print(f"❌ ERROR for word '{word}'")
-    #     print(f"  bruteforce: {output_a}")
-    #     print(f"  dynamic    : {output_b}")
-    # else:
-    #     print(f"✅ GOODD")
+
+    for word in non_isomorphic_binary_words(length_word):
+        total_words += 1
+        fout_pos, fout_len, tot_fout_position, tot_fout_length = run_greedy_test(word)
+        fout_position += fout_pos
+        fout_length += fout_len
+        totaal_fout_position += tot_fout_position
+        totaal_fout_length += tot_fout_length
+
+    fout_pos, fout_len, tot_fout_position, tot_fout_length = run_greedy_test(fibonacci_word_upto(length_word))
+    total_words += 1
+    fout_position += fout_pos
+    fout_length += fout_len
+    totaal_fout_position += tot_fout_position
+    totaal_fout_length += tot_fout_length
+
+    for word in lyndon_words(length_word):
+        total_words += 1
+        fout_pos, fout_len, tot_fout_position, tot_fout_length = run_greedy_test(word)
+        fout_position += fout_pos
+        fout_length += fout_len
+        totaal_fout_position += tot_fout_position
+        totaal_fout_length += tot_fout_length   
     
+    print(f"total words: {total_words}")
+    print(f"fout position = {fout_position} - gem fout: {totaal_fout_position/fout_position}")
+    print(f"fout length = {fout_length} - gem fout: {totaal_fout_length/fout_length}")
 
-
-def calculate_output(error, number_words, total_correct, total_error):
-    number_words += 1
-    if (error == 0):
-        total_correct += 1
-    else:
-        total_error += error
-    return number_words, total_correct, total_error
 
 
 if __name__ == "__main__":
-    # total_error = 0
-    # total_correct = 0
-    # number_words = 0
+    # experiment dbSNP
+    exp_mixed("./python_code/mixed_repeats.txt")
 
-    # # test 1: non isomorphic binary words of certain length over binary alphabet--> done (up to length 10)
-    # for word in non_isomorphic_binary_words(10):
-    #     error = test_greedy(word)
-    #     number_words, total_correct, total_error = calculate_output(error, number_words, total_correct, total_error)
-
-    # # test 2: non-isomorphic words up to a certain length over binary alphabet --> done (up to length 10)
-    # for word in non_isomorphic_binary_words_upto(10):
-    #     error = test_greedy(word)
-    #     number_words, total_correct, total_error = calculate_output(error, number_words, total_correct, total_error)
-
-    # # test 3: n-th (finite) Fibonacci word --> done
-    # for i in range(1, 6):
-    #     error = test_greedy(nth_fibonacci_word(i))
-    #     number_words, total_correct, total_error = calculate_output(error, number_words, total_correct, total_error)
-
-    # # test 4: the prefix of a certain length of the infinite Fibonacci word --> done 
-    # for i in range(10, 60, 10):
-    #     error = test_greedy(fibonacci_word_upto(i))
-    #     number_words, total_correct, total_error = calculate_output(error, number_words, total_correct, total_error)
-
-    # # test 5: Lyndon words of a certain length over a ordered alphabet --> done (up to length 10)
-    # for word in lyndon_words(10):
-    #     error = test_greedy(word)
-    #     number_words, total_correct, total_error = calculate_output(error, number_words, total_correct, total_error)
-
-
-    # print(f"MAE: {total_error/number_words}")
-    # print(f"accuracy: {(total_correct/number_words)*100}%")
-
-
-
-    # for word in non_isomorphic_binary_words(20):
-    #     # compare_cover(word)
-    #     test_dynamic(word)
+    # experiment runtime
+    length_words = [10]
+    for length_word in length_words:
+        print("-----------------------------------------------------------------------------------")
+        print(f"Length of words: {length_word}")
+        print("-----------------------------------------------------------------------------------")
+        exp_runtime("bruteforce", length_word)
+        exp_runtime("greedy_position", length_word)
+        exp_runtime("greedy_length", length_word)
+        exp_runtime("dynamic", length_word)
+        exp_runtime("dynamic_l", length_word)
     
-    # for word in non_isomorphic_binary_words_upto(10):
-    # #     # compare_cover(word)
-    #     test_dynamic(word)
 
-    # print("chechpoint 1")
 
-    for i in range(1, 8):
-    #     # compare_cover(nth_fibonacci_word(i))
-        test_dynamic(nth_fibonacci_word(i))
-
-    # print("chechpoint 2")
-
-    # for i in range(100, 1000, 100):
-    # #     # compare_cover(fibonacci_word_upto(i))
-    #     test_dynamic(fibonacci_word_upto(i))
-
-    # print("chechpoint 3")
-
-    # # # # test_dynamic(fibonacci_word_upto(10000))
-
-    
-    # for word in lyndon_words(10):
-    # #     # compare_cover(word)
-    #     test_dynamic(word)
+    # experiment greedy algorithms
+    exp_greedy(10)
 
